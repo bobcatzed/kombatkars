@@ -1,16 +1,22 @@
 package se.kyrkoherden.kombatkars;
 
+import com.googlecode.lanterna.terminal.Terminal.Color;
+
 public class Car {
 	private final String name;
 	private int maxSpeed;
 	private int maxReverse;
 	private int maxAcceleration = 2;
-	private int maxDeacceleration = 3;	
+	private int maxDeacceleration = 3;
+	private int hitPoints = 30;
+	private int rockets = 4;
+	private Color color;
 	
 	
 
-	public Car(String name) {
+	public Car(String name, Color color) {
 		this.name = name;
+		this.color = color;
 	}
 	
 	
@@ -19,7 +25,18 @@ public class Car {
 		return name;
 	}
 
-
+	public boolean fire() {
+		if(rockets > 0) {
+			rockets--;
+			return true;
+		}
+		return false;
+	}
+	
+	public int damage(int value) {
+		this.hitPoints = Math.max(0, this.hitPoints - value);
+		return this.hitPoints;
+	}
 
 	public int getMaxSpeed() {
 		return maxSpeed;
@@ -107,6 +124,12 @@ public class Car {
 
 	public int getMaxShots() {
 		return 2;
+	}
+
+
+
+	public int getHitPoints() {
+		return hitPoints;
 	}		
 	
 	

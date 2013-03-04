@@ -3,34 +3,21 @@ package se.kyrkoherden.kombatkars;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CarState {	
-	private final Car car;
-	private Position position;
-	private Direction direction;
-	private int speed;
+public class CarState extends ObjectState implements BoardObject{	
+	private static final int TYPE = 2;
+	final Car car;
+	
 	private Set<Car> targets;
 	private int shotsLeft;
 	private boolean hasReturnedFire;
 	
 	public CarState(Car car, Position position, Direction direction) {
-		super();
+		super(position, direction);
 		this.car = car;
-		this.position = position;
-		this.direction = direction;
+//		this.position = position;
+//		this.direction = direction;
 		this.speed = 0;
 		this.targets = new HashSet<Car>();
-	}
-	
-	public void setSpeed(int speed) {
-		this.speed = speed;
-	}
-	
-	public void accelerate(int diff) {
-		this.speed += Math.min(car.getMaxSpeed(),diff);
-	}
-	
-	public void turn(int angle) {
-		this.direction = this.direction.turn(angle);
 	}
 	
 	public void targetCar(Car target) {
@@ -51,58 +38,8 @@ public class CarState {
 		this.hasReturnedFire = false;
 	}
 	
-	public void move() {
-		int dx = 0;
-		int dy = 0;
-		switch(direction) {
-		case N:
-			dy=1;
-			break;
-		case NE:
-			dy=1;
-			dx=1;
-			break;
-		case E:
-			dx=1;
-			break;
-		case SE:
-			dx=1;
-			dy=-1;
-			break;
-		case S:
-			dy=-1;
-			break;
-		case SW:
-			dy=-1;
-			dx=-1;
-			break;
-		case W:
-			dx=-1;
-			break;
-		case NW:
-			dx=-1;
-			dy=1;
-			break;
-		}			
-		int x = position.getX() + dx;
-		int y = position.getY() + dy;					
-		position = new Position(x, y);
-	}
-
 	public Car getCar() {
 		return car;
-	}
-
-	public Position getPosition() {
-		return position;
-	}
-
-	public Direction getDirection() {
-		return direction;
-	}
-
-	public int getSpeed() {
-		return speed;
 	}
 
 	public Set<Car> getTargets() {
@@ -117,14 +54,58 @@ public class CarState {
 		return hasReturnedFire;
 	}
 
-	@Override
-	public String toString() {
-		return "CarState [car=" + car + ", position=" + position
-				+ ", direction=" + direction + ", speed=" + speed
-				+ ", targets=" + targets + "]";
+	public void accelerate(int diff) {
+		this.speed += Math.min(car.getMaxSpeed(),diff);
 	}
 	
-	
-	
+	@Override
+	public String toString() {
+		return "CarState [car=" + car + ", targets=" + targets + ", shotsLeft="
+				+ shotsLeft + ", hasReturnedFire=" + hasReturnedFire
+				+ ", [" + super.toString() + "]]";
+	}
+
+	public int getWidth() {
+		return 1;
+	}
+
+	public int getHeight() {
+		return 1;
+	}
+
+	public int getType() {
+		return TYPE;
+	}
+
+	public String getSymbol() {
+		String str = "O";
+		switch(getDirection()) {
+		case N:
+			str="\u2191";
+			break;
+		case NE:
+			str ="\u2197";
+			break;
+		case E:
+			str = "\u2192";
+			break;
+		case SE:
+			str = "\u2198";
+			break;
+		case S:
+			str = "\u2193";
+			break;
+		case SW:
+			str= "\u2199";
+			break;
+		case W:
+			str = "\u2190";
+			break;
+		case NW:
+			str = "\u2196";
+			break;
+		}
+		return str;
+	}	
 	
 }

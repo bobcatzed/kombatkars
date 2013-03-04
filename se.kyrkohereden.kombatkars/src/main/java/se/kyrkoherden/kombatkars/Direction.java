@@ -1,18 +1,23 @@
 package se.kyrkoherden.kombatkars;
 
 public enum Direction {
-	N(0),
-	NE(1),
-	E(2),
-	SE(3),
-	S(4),
-	SW(5),
-	W(6),
-	NW(7);
+	N(0, 'k'),
+	NE(1, 'i'),
+	E(2, 'l'),
+	SE(3, 'm'),
+	S(4, 'j'),
+	SW(5, 'n'),
+	W(6, 'h'),
+	NW(7, 'u');
 	private static final int NUMBER_OF_DIRECTIONS = 8;
 	private final int value;
-	Direction(int value) {
+	private final char key;
+	Direction(int value, char key) {
 		this.value = value;
+		this.key = key;
+	}
+	public char getKey() {
+		return key;
 	}
 	public int getValue() {
 		return value;
