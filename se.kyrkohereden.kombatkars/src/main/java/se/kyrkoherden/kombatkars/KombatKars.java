@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import com.googlecode.lanterna.TerminalFacade;
@@ -205,44 +206,140 @@ public class KombatKars {
 	}
 	
 	public void fire(CarState carState) {
-		Rocket rocket = new Rocket(carState.getPosition(), carState.getDirection());
-		gameBoard.addBoardObject(rocket);
-		for(int i = 0; i < 10; i++) {
-			if(!gameBoard.checkCollision(rocket)) {
-				rocket.move();
+		if(carState.getCar().getRockets() > 0) {
+			carState.getCar().fire();
+			System.out.format("%d rockets left%n", carState.getCar().getRockets());
+			Rocket rocket = new Rocket(carState.getPosition(), carState.getDirection());
+			gameBoard.addBoardObject(rocket);
+			for(int i = 0; i < 10; i++) {
+				if(!gameBoard.checkCollision(rocket)) {
+					rocket.move();
+					gameBoard.draw();
+					screen.refresh();
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						break;
+					}
+				} else {
+					rocket.move();
+					gameBoard.removeObject(rocket);
+					gameBoard.draw();
+					gameBoard.drawAt(rocket.getPosition(), "*", Color.RED);
+					gameBoard.refresh();
+					try {
+						Thread.sleep(400);
+					} catch (InterruptedException e) {
+						break;
+					}
+					gameBoard.draw();
+					gameBoard.refresh();
+					BoardObject hitObject = gameBoard.getObjectAtPosition(rocket.getPosition());
+					if(hitObject instanceof CarState) {
+						CarState cs = (CarState) hitObject;
+						int damage = die.roll() + die.roll() - 1;
+						cs.getCar().damage(damage);
+						System.out.format("Car hit, lost %d hitpoints, %d remaining", damage, cs.getCar().getHitPoints());
+					}
+					break;
+				}
+
+			}
+			gameBoard.removeObject(rocket);
+			gameBoard.draw();
+		}
+	}
+	
+	private static class SafeTurnSpeed {
+		private final int safe45;
+		private final int safe90;
+		private final int safe135;
+		public SafeTurnSpeed(int safe45, int safe90, int safe135) {
+			super();
+			this.safe45 = safe45;
+			this.safe90 = safe90;
+			this.safe135 = safe135;
+		}
+		public int getSkidFactor(int speed, int angle) {
+			switch(Math.abs(angle)) {
+			case 0:
+				return 0;
+			case 1:
+				return Math.max(0, speed - safe45);
+			case 2:
+				return Math.max(0, speed - safe90);
+			case 3:
+				return Math.max(0, speed - safe135);
+			default:
+				throw new IllegalArgumentException("Abs(angle) cannot be more than 3");
+				
+			}
+		}
+	}
+	
+	public boolean turn(CarState carState, Direction newDirection) {
+		SafeTurnSpeed safeTurnSpeed = new SafeTurnSpeed(8,4,2);
+		int angle = newDirection.getValue() - carState.getDirection().getValue();
+		if(angle > 3) {
+			angle -= 8;
+		} else if(angle < -3) {
+			angle += 8;
+		}
+		int skidFactor = safeTurnSpeed.getSkidFactor(carState.getSpeed(), angle);
+		if(skidFactor > 0) {
+			int skidDistance = die.roll() - Math.max(0, 8 - skidFactor);
+			System.out.format("SkidDistance: %d%n", skidDistance);
+			boolean collided = false;
+			for(int i=0; i < skidDistance; i++) {
+				try {
+					Thread.sleep(250);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if(!gameBoard.checkCollision(carState)) {
+					carState.move();					
+					gameBoard.draw();
+					screen.refresh();
+				} else {
+					System.out.println("CRASH!");
+					carState.setSpeed(0);
+					collided = true;
+					break;
+				}
+			}			
+			
+			int directionValue = die.roll();
+			int speed = carState.getSpeed();
+			if(speed == 4) {
+				directionValue += 1;
+			} else if(speed == 5 || speed == 6) {
+				directionValue += 2; 
+			} else if(speed > 6) {
+				directionValue += 3;
+			}
+			directionValue = Math.max(0, directionValue - 4);
+			int skidAngle = (directionValue+1)/2 * (directionValue % 2 == 0 ? 1 : -1);
+			System.out.format("Skidding: distance=%d, angle=%d%n", skidDistance, skidAngle);
+			if(skidAngle == 0 && !collided) {
+				carState.setDirection(newDirection);
 				gameBoard.draw();
 				screen.refresh();
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-					break;
-				}
-			} else {
-				rocket.move();
-				gameBoard.removeObject(rocket);
-				gameBoard.draw();
-				gameBoard.drawAt(rocket.getPosition(), "*", Color.RED);
-				gameBoard.refresh();
-				try {
-					Thread.sleep(400);
-				} catch (InterruptedException e) {
-					break;
-				}
-				gameBoard.draw();
-				gameBoard.refresh();
-				BoardObject hitObject = gameBoard.getObjectAtPosition(rocket.getPosition());
-				if(hitObject instanceof CarState) {
-					CarState cs = (CarState) hitObject;
-					int damage = die.roll() + die.roll() - 1;
-					cs.getCar().damage(damage);
-					System.out.format("Car hit, lost %d hitpoints, %d remaining", damage, cs.getCar().getHitPoints());
-				}
-				break;
+				return true;
 			}
-			
+			carState.setSpeed(0);
+			Direction directionAfterSkid = 
+				DirectionMap.getDirection((8 + carState.getDirection().getValue() + skidAngle) % 8);
+			carState.setDirection(directionAfterSkid);
+			gameBoard.draw();
+			screen.refresh();
+			return false;
+		} else {
+			carState.setDirection(newDirection);
+			gameBoard.draw();
+			screen.refresh();
+			return true;
 		}
-		gameBoard.removeObject(rocket);
-		gameBoard.draw();
 	}
 	
 	public void selectAction(Car car) {
@@ -302,7 +399,13 @@ public class KombatKars {
 				} else if (action.equalsIgnoreCase("t")) {
 					System.out.println("Turning, turning, turning!");
 					Direction newDirection = selectTurnDirection(car);
-					carState.setDirection(newDirection);	
+//					carState.setDirection(newDirection);
+					if(!turn(carState,newDirection)) {
+						actionState.movesLeft = 0;
+						actionState.hasFired = true;
+						actionState.hasTurned = true;
+						finished = true;
+					}
 					drawDirection(carState.getDirection());
 					gameBoard.refresh();
 					actionState.hasTurned = true;
@@ -383,13 +486,30 @@ public class KombatKars {
 		System.out.println("***************");
 		System.out.println("* KOMBAT KARS *");
 		System.out.println("***************");
-		Car car1 = new Car("Bilen", Color.RED);
-		Car car2 = new Car("Bilen", Color.BLUE);
-		List<Car> carList = Arrays.asList(car1, car2);
-		kk.getGameBoard().addBoardObject(new House(new Position(12,12), 5,2));
-		kk.getGameBoard().addBoardObject(new House(new Position(2,8), 5,4));
-		kk.addCar(car1, new Position(10, 10), Direction.N);
-		kk.addCar(car2, new Position(20, 10), Direction.N);
+		Car car1 = new Car("Red", Color.RED);
+		Car car2 = new Car("Blue", Color.BLUE);
+		List<Car> carList = Arrays.asList(car1);
+//		kk.getGameBoard().addBoardObject(new House(new Position(12,12), 5,2));
+//		kk.getGameBoard().addBoardObject(new House(new Position(2,8), 5,4));
+//		kk.getGameBoard().addBoardObject(new House(new Position(20,13), 10,5));
+//		kk.getGameBoard().addBoardObject(new House(new Position(15, 2), 7,5));
+		Random random = new Random();
+		int x0 = 4;
+		int x1 = 44;
+		int y0 = 1;
+		int y1 = 17;
+		for(int i = 0; i < 40; i++) {
+			int x = x0 + random.nextInt(x1);
+			int y = y0 + random.nextInt(y1);
+			int w = 2 + random.nextInt(4);
+			w = Math.min(x1 -x, w);
+			int h = 2 + random.nextInt(3);
+			h = Math.min(y1 - y, h);
+			kk.getGameBoard().addBoardObject(new House(new Position(x,y), w, h));
+		}
+		kk.addCar(car1, new Position(1, 1), Direction.E);
+		kk.addCar(car2, new Position(49, 17), Direction.W);
+		kk.cars.get(car1).setSpeed(8);
 		boolean gameOver = false;
 		while(!gameOver) {
 			for(Car car : carList) {
@@ -399,6 +519,13 @@ public class KombatKars {
 				}
 				kk.selectSpeed(car);
 				kk.selectAction(car);
+			}
+		}
+		for(Car car : carList) {
+			if(car.getHitPoints() <= 0) {
+				System.out.format("%s lost%n", car.getName());
+			} else {
+				System.out.format("%s won!%n", car.getName());
 			}
 		}
 		kk.terminate();

@@ -1,5 +1,7 @@
 package se.kyrkoherden.kombatkars;
 
+import com.googlecode.lanterna.terminal.Terminal.Color;
+
 public class House implements BoardObject {
 	private static final int TYPE = 1;
 	private final Position position;
@@ -31,6 +33,10 @@ public class House implements BoardObject {
 
 	public String getSymbol() {
 		return "#";
+	}
+
+	public Color getColor() {
+		return Color.WHITE;
 	}
 
 }

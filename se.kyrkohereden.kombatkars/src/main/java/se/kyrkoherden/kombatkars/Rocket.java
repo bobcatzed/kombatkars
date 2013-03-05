@@ -1,5 +1,7 @@
 package se.kyrkoherden.kombatkars;
 
+import com.googlecode.lanterna.terminal.Terminal.Color;
+
 public class Rocket extends ObjectState implements BoardObject {
 
 	public Rocket(Position position, Direction direction) {
@@ -7,12 +9,10 @@ public class Rocket extends ObjectState implements BoardObject {
 	}
 
 	public int getWidth() {
-		// TODO Auto-generated method stub
 		return 1;
 	}
 
 	public int getHeight() {
-		// TODO Auto-generated method stub
 		return 1;
 	}
 
@@ -22,6 +22,10 @@ public class Rocket extends ObjectState implements BoardObject {
 
 	public String getSymbol() {
 		return ".";
+	}
+
+	public Color getColor() {
+		return Color.WHITE;
 	}
 
 }

@@ -111,10 +111,10 @@ public class GameBoard {
 				color = Color.WHITE;
 			}
 			if(bo instanceof CarState) {				
-				putString(bo.getPosition(), bo.getSymbol(), Color.RED);			
+				putString(bo.getPosition(), bo.getSymbol(), bo.getColor());			
 			} else {
 				drawRectangle(x0 + p.getX(), y0 + p.getY(), bo.getWidth(), bo.getHeight(), bo.getSymbol(),
-						color, true);
+						bo.getColor(), true);
 			}
 		}
 	}

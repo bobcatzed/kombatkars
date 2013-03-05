@@ -3,6 +3,8 @@ package se.kyrkoherden.kombatkars;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.googlecode.lanterna.terminal.Terminal.Color;
+
 public class CarState extends ObjectState implements BoardObject{	
 	private static final int TYPE = 2;
 	final Car car;
@@ -106,6 +108,10 @@ public class CarState extends ObjectState implements BoardObject{
 			break;
 		}
 		return str;
+	}
+
+	public Color getColor() {
+		return car.getColor();
 	}	
 	
 }

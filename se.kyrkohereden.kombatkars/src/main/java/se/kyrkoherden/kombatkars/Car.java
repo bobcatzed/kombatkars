@@ -1,8 +1,12 @@
 package se.kyrkoherden.kombatkars;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.googlecode.lanterna.terminal.Terminal.Color;
 
 public class Car {
+	private static final AtomicInteger idGenerator = new AtomicInteger();
+	private final int id;
 	private final String name;
 	private int maxSpeed;
 	private int maxReverse;
@@ -15,6 +19,7 @@ public class Car {
 	
 
 	public Car(String name, Color color) {
+		this.id = idGenerator.incrementAndGet();
 		this.name = name;
 		this.color = color;
 	}
@@ -87,10 +92,7 @@ public class Car {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + maxAcceleration;
-		result = prime * result + maxDeacceleration;
-		result = prime * result + maxReverse;
-		result = prime * result + maxSpeed;
+		result = prime * result + id;
 		return result;
 	}
 
@@ -103,14 +105,8 @@ public class Car {
 		if (getClass() != obj.getClass())
 			return false;
 		Car other = (Car) obj;
-		if (maxAcceleration != other.maxAcceleration)
+		if (id != other.id)
 			return false;
-		if (maxDeacceleration != other.maxDeacceleration)
-			return false;
-		if (maxReverse != other.maxReverse)
-			return false;
-		if (maxSpeed != other.maxSpeed)
-			return false;		
 		return true;
 	}
 
@@ -126,10 +122,16 @@ public class Car {
 		return 2;
 	}
 
-
-
 	public int getHitPoints() {
 		return hitPoints;
+	}
+
+	public int getRockets() {
+		return rockets;
+	}
+
+	public Color getColor() {
+		return color;
 	}		
 	
 	
